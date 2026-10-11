@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مطعم السيد عبيد</title>
+<style>
+  :root{--bg:#14100d;--card:#221a15;--gold:#d9a441;--gold2:#f2cf7a;--text:#f6ede0;--muted:#b9a995;--red:#c8442f}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:80px}
+  header{text-align:center;padding:36px 16px 24px;background:radial-gradient(circle at top,#3a2a1c,var(--bg));border-bottom:2px solid var(--gold)}
+  header h1{font-size:2.2rem;color:var(--gold2);letter-spacing:1px}
+  header p{color:var(--muted);margin-top:6px}
+  nav{position:sticky;top:0;z-index:5;display:flex;gap:8px;overflow-x:auto;padding:10px 12px;background:#0e0b09ee;backdrop-filter:blur(6px)}
+  nav a{white-space:nowrap;padding:6px 14px;border:1px solid var(--gold);border-radius:20px;color:var(--gold2);text-decoration:none;font-size:.95rem}
+  main{max-width:900px;margin:0 auto;padding:16px}
+  section{margin-top:28px}
+  section h2{color:var(--gold);font-size:1.5rem;margin-bottom:12px;padding-right:12px;border-right:5px solid var(--gold)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .item{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:14px;padding:10px;border:1px solid #3a2d23}
+  .pic{width:84px;height:84px;border-radius:12px;background:#3a2d23;display:flex;align-items:center;justify-content:center;font-size:2.4rem;flex-shrink:0;overflow:hidden}
+  .pic img{width:100%;height:100%;object-fit:cover}
+  .info{flex:1;min-width:0}
+  .info .n{font-weight:700;font-size:1.05rem}
+  .info .p{color:var(--gold2);font-weight:700;margin-top:4px}
+  .offers .item{border-color:var(--gold);background:linear-gradient(135deg,#2e2216,#221a15)}
+  .offers .d{color:var(--muted);font-size:.9rem}
+  footer{text-align:center;color:var(--muted);margin-top:40px;font-size:.9rem}
+  /* admin */
+  #lock{position:fixed;bottom:16px;left:16px;width:48px;height:48px;border-radius:50%;border:2px solid var(--gold);background:var(--card);color:var(--gold2);font-size:1.3rem;cursor:pointer;z-index:20}
+  #bar{display:none;position:fixed;bottom:0;left:0;right:0;background:#000d;padding:10px;gap:8px;justify-content:center;flex-wrap:wrap;z-index:15}
+  .admin #bar{display:flex}
+  .admin #lock{bottom:70px}
+  button.b{padding:8px 14px;border-radius:10px;border:none;background:var(--gold);color:#201509;font-weight:700;cursor:pointer;font-family:inherit}
+  button.b.red{background:var(--red);color:#fff}
+  .ed{display:none;margin-top:6px;gap:6px;flex-wrap:wrap}
+  .admin .ed{display:flex}
+  .ed input{width:100%;padding:6px;border-radius:8px;border:1px solid var(--gold);background:#120d09;color:var(--text);font-family:inherit}
+  .ed .row{display:flex;gap:6px;width:100%}
+  .ed button{padding:5px 10px;font-size:.8rem}
+  .addsec{display:none;margin-top:10px}
+  .admin .addsec{display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>مطعم السيد عبيد</h1>
+  <p>أشهى المأكولات بأفضل الأسعار</p>
+</header>
+<nav id="nav"></nav>
+<main id="app"></main>
+<footer>© مطعم السيد عبيد — الأسعار بالليرة السورية (ل.س)</footer>
+
+<button id="lock" title="لوحة التحكم">🔒</button>
+<div id="bar">
+  <button class="b" onclick="addSection()">+ قسم جديد</button>
+  <button class="b" onclick="addOffer()">+ عرض جديد</button>
+  <button class="b red" onclick="resetAll()">استعادة الأصلي</button>
+  <button class="b" onclick="logout()">خروج</button>
+</div>
+
+<script>
+// ====== غيّر كلمة السر من هنا ======
+const ADMIN_PASS = "1234";
+// ===================================
+const KEY = "alsayed_obaid_menu_v1";
+const DEFAULT = {
+  offers:[
+    {id:"o1",title:"عرض العائلة",desc:"دجاجة كاملة + بطاطا + مقبلات",price:85000,img:""}
+  ],
+  sections:[
+    {id:"s1",name:"🍗 الدجاج",items:[
+      {id:"i1",name:"نصف دجاجة مشوية",price:30000,img:"",emoji:"🍗"},
+      {id:"i2",name:"دجاجة كاملة",price:55000,img:"",emoji:"🍗"},
+      {id:"i3",name:"شاورما دجاج",price:12000,img:"",emoji:"🌯"}
+    ]},
+    {id:"s2",name:"🥩 اللحوم والمشاوي",items:[
+      {id:"i4",name:"شيش طاووق",price:35000,img:"",emoji:"🍢"},
+      {id:"i5",name:"كباب",price:40000,img:"",emoji:"🍖"}
+    ]},
+    {id:"s3",name:"🥙 السندويشات",items:[
+      {id:"i6",name:"فلافل",price:6000,img:"",emoji:"🧆"},
+      {id:"i7",name:"برغر",price:18000,img:"",emoji:"🍔"}
+    ]},
+    {id:"s4",name:"🥤 المشروبات",items:[
+      {id:"i8",name:"عصير طازج",price:8000,img:"",emoji:"🍹"},
+      {id:"i9",name:"مشروب غازي",price:4000,img:"",emoji:"🥤"}
+    ]}
+  ]
+};
+let data, admin = false;
+function load(){
+  try{ const s = localStorage.getItem(KEY); data = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT)); }
+  catch(e){ data = JSON.parse(JSON.stringify(DEFAULT)); }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(data)); }
+  catch(e){ alert("تعذّر الحفظ (الصور كبيرة أو التخزين ممتلئ)"); }
+}
+const fmt = n => Number(n||0).toLocaleString("en-US") + " ل.س";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid = () => "x" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+
+function pic(it){
+  return it.img ? `<img src="${it.img}" alt="">` : (it.emoji || "🍽️");
+}
+function itemHTML(it, kind, sid){
+  const ref = `'${kind}','${sid||""}','${it.id}'`;
+  const name = kind==="offer" ? it.title : it.name;
+  return `<div class="item"><div class="pic">${pic(it)}</div><div class="info">
+    <div class="n">${esc(name)}</div>
+    ${kind==="offer" ? `<div class="d">${esc(it.desc||"")}</div>` : ""}
+    <div class="p">${fmt(it.price)}</div>
+    <div class="ed">
+      <input value="${esc(name)}" onchange="upd(${ref},'name',this.value)" placeholder="الاسم">
+      ${kind==="offer" ? `<input value="${esc(it.desc||"")}" onchange="upd(${ref},'desc',this.value)" placeholder="الوصف">` : ""}
+      <input type="number" value="${it.price}" onchange="upd(${ref},'price',this.value)" placeholder="السعر">
+      <div class="row">
+        <button class="b" onclick="photo(${ref})">📷 صورة</button>
+        <button class="b red" onclick="del(${ref})">حذف</button>
+      </div>
+    </div></div></div>`;
+}
+function render(){
+  document.body.classList.toggle("admin", admin);
+  document.getElementById("lock").textContent = admin ? "🔓" : "🔒";
+  let html = "", nav = "";
+  if(data.offers.length || admin){
+    nav += `<a href="#offers">🔥 عروضات</a>`;
+    html += `<section id="offers" class="offers"><h2>🔥 عروضات</h2><div class="grid">${
+      data.offers.map(o => itemHTML(o,"offer","")).join("")}</div></section>`;
+  }
+  data.sections.forEach(s=>{
+    nav += `<a href="#${s.id}">${esc(s.name)}</a>`;
+    html += `<section id="${s.id}"><h2>${esc(s.name)}</h2>
+      <div class="ed"><input value="${esc(s.name)}" onchange="renameSec('${s.id}',this.value)"></div>
+      <div class="grid">${s.items.map(i => itemHTML(i,"item",s.id)).join("")}</div>
+      <div class="addsec"><button class="b" onclick="addItem('${s.id}')">+ صنف جديد</button>
+      <button class="b red" onclick="delSec('${s.id}')">حذف القسم</button></div></section>`;
+  });
+  document.getElementById("nav").innerHTML = nav;
+  document.getElementById("app").innerHTML = html;
+}
+function find(kind,sid,id){
+  if(kind==="offer") return data.offers.find(o=>o.id===id);
+  return data.sections.find(s=>s.id===sid).items.find(i=>i.id===id);
+}
+function upd(kind,sid,id,field,val){
+  const o = find(kind,sid,id);
+  if(field==="price") o.price = Number(val)||0;
+  else if(field==="name") { if(kind==="offer") o.title = val; else o.name = val; }
+  else o[field] = val;
+  save(); render();
+}
+function del(kind,sid,id){
+  if(!confirm("حذف هذا العنصر؟")) return;
+  if(kind==="offer") data.offers = data.offers.filter(o=>o.id!==id);
+  else { const s = data.sections.find(s=>s.id===sid); s.items = s.items.filter(i=>i.id!==id); }
+  save(); render();
+}
+function photo(kind,sid,id){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*";
+  inp.onchange = () => {
+    const f = inp.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      const im = new Image();
+      im.onload = () => {
+        const m = 400, k = Math.min(1, m/Math.max(im.width, im.height));
+        const c = document.createElement("canvas");
+        c.width = im.width*k; c.height = im.height*k;
+        c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+        find(kind,sid,id).img = c.toDataURL("image/jpeg",0.7);
+        save(); render();
+      };
+      im.src = r.result;
+    };
+    r.readAsDataURL(f);
+  };
+  inp.click();
+}
+function addItem(sid){
+  data.sections.find(s=>s.id===sid).items.push({id:uid(),name:"صنف جديد",price:0,img:"",emoji:"🍽️"});
+  save(); render();
+}
+function addOffer(){
+  data.offers.push({id:uid(),title:"عرض جديد",desc:"",price:0,img:""});
+  save(); render();
+}
+function addSection(){
+  const n = prompt("اسم القسم الجديد:"); if(!n) return;
+  data.sections.push({id:uid(),name:n,items:[]}); save(); render();
+}
+function renameSec(id,v){ data.sections.find(s=>s.id===id).name = v; save(); render(); }
+function delSec(id){
+  if(!confirm("حذف القسم وكل أصنافه؟")) return;
+  data.sections = data.sections.filter(s=>s.id!==id); save(); render();
+}
+function resetAll(){
+  if(!confirm("استعادة القائمة الأصلية؟ ستضيع كل تعديلاتك.")) return;
+  data = JSON.parse(JSON.stringify(DEFAULT)); save(); render();
+}
+function logout(){ admin = false; render(); }
+document.getElementById("lock").onclick = () => {
+  if(admin){ logout(); return; }
+  const p = prompt("أدخل كلمة السر:");
+  if(p === null) return;
+  if(p === ADMIN_PASS){ admin = true; render(); } else alert("كلمة السر غير صحيحة");
+};
+load(); render();
+</script>
+</body>
+</html>
